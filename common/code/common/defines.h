@@ -1,12 +1,13 @@
 #pragma once
 
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-#include <vector>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <algorithm>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <vector>
+
 
 #if defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)
 #define OS_WIN

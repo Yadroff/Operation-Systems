@@ -2,6 +2,6 @@
 
 void err::DebugBreak()
 {
-    int *pointer = nullptr;
+    int* pointer = nullptr;
     int val = *pointer;
 }

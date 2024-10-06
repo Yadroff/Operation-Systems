@@ -1,41 +1,41 @@
-#include "os.h"
 #include "os_win.h"
+#include "os.h"
+
 
 using namespace os;
 
-#define SYS_CALL_AND_LOG(call)                                                          \
-    do{                                                                                 \
-        BOOL RES = call;                                                                \
-        if (RES == FALSE){                                                              \
-            std::stringstream error;                                                    \
-            error << #call << " failed. Error code: 0x" << std::hex << GetLastError();  \
-            LogErr("os/win_32", error.str());                                           \
-        }                                                                               \
+#define SYS_CALL_AND_LOG(call)                                                         \
+    do {                                                                               \
+        BOOL RES = call;                                                               \
+        if (RES == FALSE) {                                                            \
+            std::stringstream error;                                                   \
+            error << #call << " failed. Error code: 0x" << std::hex << GetLastError(); \
+            LogErr("os/win_32", error.str());                                          \
+        }                                                                              \
     } while (0)
 
-
-bool CreateProc(const ProcessStartInfo &info)
+bool CreateProc(const ProcessStartInfo& info)
 {
     STARTUPINFO cif;
     ZeroMemory(&cif, sizeof(STARTUPINFO));
 
-    if (!info.flags & ProcessStartInfo::FOCUSED){
+    if (!info.flags & ProcessStartInfo::FOCUSED) {
         cif.wShowWindow = SW_SHOWMINNOACTIVE;
         cif.dwFlags = STARTF_USESHOWWINDOW;
     }
 
     BOOL redirectHandles = FALSE;
-    if (info.redirectStdin || info.redirectStdout || info.redirectStderr){
+    if (info.redirectStdin || info.redirectStdout || info.redirectStderr) {
         cif.dwFlags |= STARTF_USESTDHANDLES;
         redirectHandles = TRUE;
 
-        if (info.redirectStdin){
+        if (info.redirectStdin) {
             cif.hStdInput = info.redirectStdin;
         }
-        if (info.redirectStdout){
+        if (info.redirectStdout) {
             cif.hStdOutput = info.redirectStdout;
         }
-        if (info.redirectStderr){
+        if (info.redirectStderr) {
             cif.hStdError = info.redirectStderr;
         }
     }
@@ -47,36 +47,36 @@ bool CreateProc(const ProcessStartInfo &info)
     std::string cmd = info.executeCmdAsShell ? info.cmd : GenerateAppCmd(info.cmd.c_str(), info.args);
 
     DWORD creationFlags = CREATE_DEFAULT_ERROR_MODE;
-    if (info.flags & ProcessStartInfo::HIDDEN){
+    if (info.flags & ProcessStartInfo::HIDDEN) {
         creationFlags |= CREATE_NO_WINDOW;
-    } else{
-        if (!(info.flags & ProcessStartInfo::USE_PARENT_CONSOLE)){
+    } else {
+        if (!(info.flags & ProcessStartInfo::USE_PARENT_CONSOLE)) {
             creationFlags |= CREATE_NEW_CONSOLE;
         }
     }
 
     BOOL res = CreateProcess(info.executeCmdAsShell ? nullptr : const_cast<char*>(info.cmd.c_str()),
-    const_cast<char*>(cmd.data()),
-    nullptr,
-    nullptr,
-    redirectHandles,
-    creationFlags,
-    nullptr,
-    info.workDir.empty() ? nullptr : info.workDir.c_str(),
-    &cif,
-    &pi);
+        const_cast<char*>(cmd.data()),
+        nullptr,
+        nullptr,
+        redirectHandles,
+        creationFlags,
+        nullptr,
+        info.workDir.empty() ? nullptr : info.workDir.c_str(),
+        &cif,
+        &pi);
 
-    if (res == FALSE){
+    if (res == FALSE) {
         std::stringstream error;
         error << "Create process failed, error: 0x" << std::hex << GetLastError();
         LogErr("os/win_32", error.str());
     }
 
-    if (pi.hThread != nullptr && pi.hThread != INVALID_HANDLE_VALUE){
+    if (pi.hThread != nullptr && pi.hThread != INVALID_HANDLE_VALUE) {
         CloseHandle(pi.hThread);
     }
 
-    if (pi.hProcess == INVALID_HANDLE_VALUE){
+    if (pi.hProcess == INVALID_HANDLE_VALUE) {
         std::stringstream error;
         error << "Create process return invalid process handle, error: 0x" << std::hex << GetLastError();
         LogErr("os/win_32", error.str());
@@ -86,39 +86,35 @@ bool CreateProc(const ProcessStartInfo &info)
     return reinterpret_cast<ProcessHandle>(pi.hProcess);
 }
 
-
 std::string GenerateAppCmd(const char* cmd, const std::vector<std::string>& args)
 {
     static constexpr const char SEPARATOR = ' ';
 
     std::stringstream stream;
     stream << cmd;
-    for (const std::string& arg: args){
+    for (const std::string& arg : args) {
         bool needWrap = std::find(all(arg), SEPARATOR) != arg.end();
 
-        if (needWrap){
+        if (needWrap) {
             stream << SEPARATOR << "\"" << arg << "\"";
-        } else{
+        } else {
             stream << SEPARATOR << arg;
         }
     }
     return stream.str();
 }
 
-
 void CloseProc(ProcessHandle process)
 {
     CloseHandle(process);
 }
-
 
 void KillProc(ProcessHandle process, uint32_t ret)
 {
     TerminateProcess(process, static_cast<DWORD>(ret));
 }
 
-
-bool CreatePipe(FileHandle &outReadPipe, FileHandle &outWritePipe)
+bool CreatePipe(FileHandle& outReadPipe, FileHandle& outWritePipe)
 {
     SECURITY_ATTRIBUTES sa;
     ZeroMemory(&sa, sizeof(sa));
@@ -133,21 +129,19 @@ bool CreatePipe(FileHandle &outReadPipe, FileHandle &outWritePipe)
     return outReadPipe && outWritePipe;
 }
 
-
-int PipeWrite(FileHandle pipe, const void *buf, int count)
+int PipeWrite(FileHandle pipe, const void* buf, int count)
 {
     DWORD countWritten;
-    if (WriteFile(pipe, buf, count, &countWritten, nullptr)){
+    if (WriteFile(pipe, buf, count, &countWritten, nullptr)) {
         return countWritten;
     }
     return -1;
 }
 
-
-int os::PipeRead(FileHandle pipe, void *buf, int count)
+int os::PipeRead(FileHandle pipe, void* buf, int count)
 {
     DWORD countRead;
-    if (ReadFile(pipe, buf, count, &countRead, nullptr)){
+    if (ReadFile(pipe, buf, count, &countRead, nullptr)) {
         return countRead;
     }
     return -1;

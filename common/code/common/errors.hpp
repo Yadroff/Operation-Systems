@@ -1,4 +1,4 @@
-template<typename... Args>
+template <typename... Args>
 std::string err::CreateReport(const char* file, int line, const char* condition, const char* fmt, const Args... args)
 {
     std::stringstream stream;

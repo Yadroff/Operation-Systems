@@ -2,16 +2,15 @@
 
 #include "common/comm.h"
 
-namespace os
-{
-struct FileHandleDummy{};
+namespace os {
+struct FileHandleDummy { };
 typedef FileHandleDummy* FileHandle;
 
-struct ProcessHandleDummy{};
+struct ProcessHandleDummy { };
 typedef ProcessHandleDummy* ProcessHandle;
 
-struct ProcessStartInfo{
-    enum FLAGS: BYTE{
+struct ProcessStartInfo {
+    enum FLAGS : BYTE {
         FOCUSED = 0,
         HIDDEN,
         USE_PARENT_CONSOLE,
@@ -40,12 +39,9 @@ void CloseProc(ProcessHandle proc);
 
 void KillProc(ProcessHandle proc, uint32_t ret = -1);
 
-bool CreatePipe(FileHandle &readPipe, FileHandle &writePipe);
+bool CreatePipe(FileHandle& readPipe, FileHandle& writePipe);
 
 int PipeWrite(FileHandle pipe, const void* buf, int count);
 
 int PipeRead(FileHandle pipe, void* buf, int count);
-
-
-
 } // namespace
